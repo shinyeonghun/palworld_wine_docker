@@ -139,9 +139,9 @@ The main configuration file is:
 Important values:
 
 ```env
-SERVER_NAME=PengWorld
-SERVER_DESCRIPTION=peng
-SERVER_PASSWORD=1123
+SERVER_NAME=PalWorld
+SERVER_DESCRIPTION=pal
+SERVER_PASSWORD=1111
 ADMIN_PASSWORD=generated_random_password
 PUBLIC_PORT=8211
 
