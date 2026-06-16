@@ -138,7 +138,7 @@ RUN dpkg --add-architecture i386 \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
     ca-certificates curl wget gnupg unzip tar xz-utils \
-    xvfb cabextract p7zip-full python3 procps gosu \
+    xvfb xauth cabextract p7zip-full python3 procps iproute2 gosu \
     lib32gcc-s1 locales \
  && locale-gen en_US.UTF-8 \
  && mkdir -pm755 /etc/apt/keyrings \
@@ -180,7 +180,12 @@ else
 fi
 
 mkdir -p /data
-chown -R steam:steam /data
+chown -R steam:"$GROUP_NAME" /data 2>/dev/null || chown -R steam:steam /data 2>/dev/null || true
+
+# Xvfb needs this directory, but the server runs as non-root.
+mkdir -p /tmp/.X11-unix
+chmod 1777 /tmp/.X11-unix
+chown root:root /tmp/.X11-unix 2>/dev/null || true
 
 exec gosu steam /opt/run-palworld.sh "$@"
 EOF
@@ -479,8 +484,22 @@ install_ue4ss() {
 
 run_server() {
   cd "$SERVER"
-  log "Starting Palworld server..."
-  exec xvfb-run -a wine PalServer.exe \
+
+  log "Starting Xvfb..."
+  pkill -f "Xvfb :99" 2>/dev/null || true
+  Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp &
+  XVFB_PID="$!"
+
+  sleep 3
+
+  export DISPLAY=:99
+
+  log "Starting Palworld server with Wine..."
+  log "WorkingDirectory=$(pwd)"
+  log "WineVersion=$(wine --version || true)"
+  log "PalServer=$(ls -al PalServer.exe || true)"
+
+  exec wine PalServer.exe \
     -port="${PUBLIC_PORT:-8211}" \
     -useperfthreads \
     -NoAsyncLoadingThread \
