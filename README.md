@@ -96,7 +96,6 @@ curl -fsSL \
 chmod +x palworld_wine_docker_install.sh
 
 ./palworld_wine_docker_install.sh
-./install-palworld-wine-docker.sh
 
 ```
 
