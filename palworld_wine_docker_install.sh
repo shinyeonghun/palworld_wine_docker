@@ -264,12 +264,41 @@ update_server() {
   fi
 
   log "Installing/updating Palworld Windows Dedicated Server..."
-  "$STEAMCMD" \
-    +@sSteamCmdForcePlatformType windows \
-    +force_install_dir "$SERVER" \
-    +login anonymous \
-    +app_update 2394010 $validate_arg \
-    +quit
+
+  for attempt in 1 2 3; do
+    log "SteamCMD update attempt $attempt/3"
+
+    if "$STEAMCMD" \
+      +@sSteamCmdForcePlatformType windows \
+      +force_install_dir "$SERVER" \
+      +login anonymous \
+      +app_update 2394010 $validate_arg \
+      +quit; then
+      log "SteamCMD update succeeded."
+      return 0
+    fi
+
+    log "SteamCMD update failed. Cleaning SteamCMD cache before retry..."
+
+    rm -rf \
+      "$DATA/steamcmd/appcache" \
+      "$DATA/steamcmd/depotcache" \
+      "$DATA/steamcmd/config" \
+      "$DATA/steamcmd/logs" \
+      "$SERVER/steamapps/downloading" \
+      "$SERVER/steamapps/temp" \
+      "$SERVER/steamapps/workshop"
+
+    sleep 10
+  done
+
+  if [[ -f "$SERVER/PalServer.exe" ]]; then
+    log "SteamCMD update failed, but PalServer.exe exists. Continuing with existing server files."
+    return 0
+  fi
+
+  echo "SteamCMD update failed and PalServer.exe does not exist." >&2
+  exit 1
 }
 
 apply_settings() {
