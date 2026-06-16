@@ -485,27 +485,31 @@ install_ue4ss() {
 }
 
 run_server() {
-  cd "$SERVER"
+cd "$SERVER"
 
-  log "Starting Xvfb..."
-  pkill -f "Xvfb :99" 2>/dev/null || true
-  Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp &
-  XVFB_PID="$!"
+log "Preparing X11 socket directory..."
+mkdir -p /tmp/.X11-unix 2>/dev/null || true
+chmod 1777 /tmp/.X11-unix 2>/dev/null || true
 
-  sleep 3
+log "Starting Xvfb..."
+pkill -f "Xvfb :99" 2>/dev/null || true
+Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp &
+XVFB_PID="$!"
 
-  export DISPLAY=:99
+sleep 3
 
-  log "Starting Palworld server with Wine..."
-  log "WorkingDirectory=$(pwd)"
-  log "WineVersion=$(wine --version || true)"
-  log "PalServer=$(ls -al PalServer.exe || true)"
+export DISPLAY=:99
 
-  exec wine PalServer.exe \
-    -port="${PUBLIC_PORT:-8211}" \
-    -useperfthreads \
-    -NoAsyncLoadingThread \
-    -UseMultithreadForDS
+log "Starting Palworld server with Wine..."
+log "WorkingDirectory=$(pwd)"
+log "WineVersion=$(wine --version || true)"
+log "PalServer=$(ls -al PalServer.exe || true)"
+
+exec wine PalServer.exe
+-port="${PUBLIC_PORT:-8211}"
+-useperfthreads
+-NoAsyncLoadingThread
+-UseMultithreadForDS
 }
 
 install_steamcmd
