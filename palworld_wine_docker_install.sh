@@ -543,8 +543,6 @@ chmod 1777 /tmp/.X11-unix 2>/dev/null || true
 log "Starting Xvfb..."
 pkill -f "Xvfb :99" 2>/dev/null || true
 Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp &
-XVFB_PID="$!"
-
 sleep 3
 
 export DISPLAY=:99
@@ -554,12 +552,13 @@ log "WorkingDirectory=$(pwd)"
 log "WineVersion=$(wine --version || true)"
 log "PalServer=$(ls -al PalServer.exe || true)"
 
-exec wine PalServer.exe \
--port="${PUBLIC_PORT:-8211}" \
--useperfthreads \
--NoAsyncLoadingThread \
+exec wine PalServer.exe 
+-port="${PUBLIC_PORT:-8211}" 
+-useperfthreads 
+-NoAsyncLoadingThread 
 -UseMultithreadForDS
 }
+
 
 install_steamcmd
 init_wine
@@ -599,67 +598,89 @@ BASE="$(cd "$(dirname "$0")" && pwd)"
 cd "$BASE"
 
 if docker ps >/dev/null 2>&1; then
-  DOCKER="docker"
+DOCKER="docker"
 else
-  DOCKER="sudo docker"
+DOCKER="sudo docker"
 fi
 
 case "${1:-}" in
-  start)
-    $DOCKER compose up -d
-    ;;
-  stop)
-    $DOCKER compose down
-    ;;
-  restart)
-    $DOCKER compose down
-    $DOCKER compose up -d
-    ;;
-  logs)
-    $DOCKER logs -f --tail=150 palworld-wine
-    ;;
-  status)
-    $DOCKER compose ps
-    $DOCKER ps --filter name=palworld-wine
-    ;;
-  shell)
-    $DOCKER exec -it palworld-wine bash
-    ;;
-  update)
-    mkdir -p backups
-    echo "서버 중지..."
-    $DOCKER compose down || true
+start)
+$DOCKER compose up -d
+;;
 
-    echo "백업 생성..."
-    tar -czvf "backups/palworld-before-update-$(date +%Y%m%d_%H%M%S).tar.gz" data/server/Pal/Saved data/server/Pal/Binaries/Win64 2>/dev/null || true
+stop)
+$DOCKER compose down
+;;
 
-    echo "SteamCMD 업데이트..."
-    $DOCKER compose run --rm \
-      -e UPDATE_ON_START=true \
-      -e UPDATE_MODS_ON_START=true \
-      palworld-wine update
+restart)
+$DOCKER compose down
+$DOCKER compose up -d
+;;
 
-    echo "서버 시작..."
-    $DOCKER compose up -d
-    ;;
-  adminip)
-    IP="${2:-}"
-    if [[ -z "$IP" ]]; then
-      echo "사용법: ./pal.sh adminip IP"
-      echo "예: ./pal.sh adminip 123.45.67.89"
-      exit 1
-    fi
+logs)
+$DOCKER logs -f --tail=150 palworld-wine
+;;
 
-    CFG="$BASE/data/server/Pal/Binaries/Win64/PalDefender/Config.json"
-    if [[ ! -f "$CFG" ]]; then
-      exit 1
-    fi
+status)
+$DOCKER compose ps
+$DOCKER ps --filter name=palworld-wine
+;;
 
-    $DOCKER compose down || true
+shell)
+$DOCKER exec -it palworld-wine bash
+;;
 
-    cp "$CFG" "$CFG.bak.$(date +%Y%m%d_%H%M%S)"
-    python3 - "$CFG" "$IP" <<'PY'
-import json, sys
+update)
+mkdir -p backups
+
+```
+echo "서버 중지..."
+$DOCKER compose down || true
+
+echo "백업 생성..."
+tar -czvf "backups/palworld-before-update-$(date +%Y%m%d_%H%M%S).tar.gz" \
+  data/server/Pal/Saved \
+  data/server/Pal/Binaries/Win64 \
+  2>/dev/null || true
+
+echo "SteamCMD 업데이트..."
+$DOCKER compose run --rm \
+  -e UPDATE_ON_START=true \
+  -e UPDATE_MODS_ON_START=true \
+  palworld-wine update
+
+echo "서버 시작..."
+$DOCKER compose up -d
+;;
+```
+
+adminip)
+IP="${2:-}"
+
+```
+if [[ -z "$IP" ]]; then
+  echo "사용법: ./pal.sh adminip IP"
+  echo "예: ./pal.sh adminip 123.45.67.89"
+  exit 1
+fi
+
+CFG="$BASE/data/server/Pal/Binaries/Win64/PalDefender/Config.json"
+
+if [[ ! -f "$CFG" ]]; then
+  echo "PalDefender Config.json이 아직 없음."
+  echo "서버를 한 번 실행해서 PalDefender 폴더가 생성된 뒤 다시 실행."
+  exit 1
+fi
+
+$DOCKER compose down || true
+
+cp "$CFG" "$CFG.bak.$(date +%Y%m%d_%H%M%S)"
+
+python3 - "$CFG" "$IP" <<'PY'
+```
+
+import json
+import sys
 from pathlib import Path
 
 cfg = Path(sys.argv[1])
@@ -667,60 +688,111 @@ ip = sys.argv[2].strip()
 
 data = json.loads(cfg.read_text(encoding="utf-8-sig"))
 data["useAdminWhitelist"] = True
+
 ips = data.get("adminIPs")
 if not isinstance(ips, list):
-    ips = []
+ips = []
+
 if ip not in ips:
-    ips.append(ip)
+ips.append(ip)
+
 data["adminIPs"] = ips
 
 cfg.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
 print(json.dumps({"useAdminWhitelist": data["useAdminWhitelist"], "adminIPs": data["adminIPs"]}, indent=4))
 PY
 
-    $DOCKER compose up -d
-    ;;
-    
-  modlinks)
-    mkdir -p "$BASE/data/server/Pal/Content/Paks/~mods"
-    mkdir -p "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods"
-    ```
-    ln -sfn "$BASE/data/server/Pal/Content/Paks/~mods" "$HOME/palworld-pak-mods"
-    ln -sfn "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods" "$HOME/palworld-ue4ss-mods"
+```
+$DOCKER compose up -d
+;;
+```
 
-    echo "PAK mods:"
-    echo "  $HOME/palworld-pak-mods"
-    echo
-    echo "UE4SS mods:"
-    echo "  $HOME/palworld-ue4ss-mods"
-    ;;
-    ```
-    
-  check)
-    echo "===== docker ====="
-    $DOCKER ps --filter name=palworld-wine
-    echo
-    echo "===== ports ====="
-    sudo ss -lunpt | grep 8211 || true
-    echo
-    echo "===== mod files ====="
-    find data/server/Pal/Binaries/Win64 -maxdepth 4 \( -iname 'PalDefender.dll' -o -iname 'd3d9.dll' -o -iname 'dwmapi.dll' -o -iname 'UE4SS.dll' -o -iname 'UE4SS-settings.ini' -o -iname '*UE4SS*.log' \) -print 2>/dev/null || true
-    ;;
-  *)
-    echo "사용법:"
-    echo "  ./pal.sh start      서버 시작"
-    echo "  ./pal.sh stop       서버 종료"
-    echo "  ./pal.sh restart    서버 재시작"
-    echo "  ./pal.sh logs       로그 보기"
-    echo "  ./pal.sh status     상태 보기"
-    echo "  ./pal.sh update     서버/모드 업데이트"
-    echo "  ./pal.sh adminip IP PalDefender admin IP 추가"
-    echo "  ./pal.sh check      포트/모드 확인"
-    echo "  ./pal.sh shell      컨테이너 쉘"
-    exit 1
-    ;;
+modlinks)
+mkdir -p "$BASE/data/server/Pal/Content/Paks/~mods"
+mkdir -p "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods"
+
+```
+ln -sfn "$BASE/data/server/Pal/Content/Paks/~mods" "$HOME/palworld-pak-mods"
+ln -sfn "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods" "$HOME/palworld-ue4ss-mods"
+
+echo "PAK mods:"
+echo "  $HOME/palworld-pak-mods"
+echo
+echo "UE4SS mods:"
+echo "  $HOME/palworld-ue4ss-mods"
+;;
+```
+
+check)
+echo "===== docker ====="
+$DOCKER ps --filter name=palworld-wine || true
+
+```
+echo
+echo "===== ports ====="
+sudo ss -lunpt | grep 8211 || true
+
+echo
+echo "===== mod files ====="
+find data/server/Pal/Binaries/Win64 -maxdepth 5 \
+  \( \
+    -iname 'PalDefender.dll' \
+    -o -iname 'd3d9.dll' \
+    -o -iname 'd3d9_config.json' \
+    -o -iname 'dwmapi.dll' \
+    -o -iname 'UE4SS.dll' \
+    -o -iname 'UE4SS-settings.ini' \
+    -o -iname '*UE4SS*.log' \
+  \) -print 2>/dev/null || true
+
+echo
+echo "===== mod links ====="
+ls -al "$HOME" | grep -E 'palworld-pak-mods|palworld-ue4ss-mods' || true
+;;
+```
+
+disablemods)
+echo "서버 중지..."
+$DOCKER compose down || true
+
+```
+WIN64="$BASE/data/server/Pal/Binaries/Win64"
+DISABLED="$WIN64/_disabled_mods_$(date +%Y%m%d_%H%M%S)"
+
+mkdir -p "$DISABLED"
+
+for f in d3d9.dll d3d9_config.json dwmapi.dll xinput1_3.dll; do
+  if [[ -e "$WIN64/$f" ]]; then
+    mv "$WIN64/$f" "$DISABLED/"
+  fi
+done
+
+echo "모드 로더 DLL 비활성화 완료:"
+echo "  $DISABLED"
+
+echo "서버 시작..."
+$DOCKER compose up -d
+;;
+```
+
+*)
+echo "사용법:"
+echo "  ./pal.sh start          서버 시작"
+echo "  ./pal.sh stop           서버 종료"
+echo "  ./pal.sh restart        서버 재시작"
+echo "  ./pal.sh logs           로그 보기"
+echo "  ./pal.sh status         상태 보기"
+echo "  ./pal.sh update         서버/모드 업데이트"
+echo "  ./pal.sh adminip IP     PalDefender admin IP 추가"
+echo "  ./pal.sh modlinks       PAK/UE4SS 모드 폴더 심볼릭 링크 생성"
+echo "  ./pal.sh check          포트/모드 확인"
+echo "  ./pal.sh disablemods    d3d9/dwmapi 모드 로더 비활성화"
+echo "  ./pal.sh shell          컨테이너 쉘"
+exit 1
+;;
 esac
 EOF
+
 
 chmod +x pal.sh
 
