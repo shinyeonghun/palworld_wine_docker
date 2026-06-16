@@ -146,11 +146,11 @@ RUN dpkg --add-architecture i386 \
  && wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources \
  && apt-get update \
  && apt-get install -y --install-recommends winehq-stable \
- && wget -O /usr/local/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks
- && chmod +x /usr/local/bin/winetricks
- && mkdir -p /tmp/.X11-unix
- && chmod 1777 /tmp/.X11-unix
- && apt-get clean
+ && wget -O /usr/local/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
+ && chmod +x /usr/local/bin/winetricks \
+ && mkdir -p /tmp/.X11-unix \
+ && chmod 1777 /tmp/.X11-unix \
+ && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /entrypoint.sh
