@@ -668,7 +668,7 @@ CFG="$BASE/data/server/Pal/Binaries/Win64/PalDefender/Config.json"
 
 if [[ ! -f "$CFG" ]]; then
   echo "PalDefender Config.json이 아직 없음."
-  echo "서버를 한 번 실행해서 PalDefender 폴더가 생성된 뒤 다시 실행."
+  echo "서버를 한 번 켠 뒤 다시 실행."
   exit 1
 fi
 
