@@ -66,13 +66,8 @@ Make sure your cloud firewall or router allows at least:
 8211/udp
 ```
 
-## Quick Install
+## Install
 
-Run this on a fresh Ubuntu server:
-
-```bash
-bash <(curl -fsSL "https://raw.githubusercontent.com/shinyeonghun/palworld_wine_docker/refs/heads/main/palworld_wine_docker_install.sh")
-```
 
 The first run may take a while because it needs to:
 
