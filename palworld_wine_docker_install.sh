@@ -571,7 +571,7 @@ case "${1:-}" in
   adminip)
     IP="${2:-}"
     if [[ -z "$IP" ]]; then
-      echo "사용법: ./pal.sh adminip 네_공인IP"
+      echo "사용법: ./pal.sh adminip IP"
       echo "예: ./pal.sh adminip 123.45.67.89"
       exit 1
     fi
@@ -651,7 +651,7 @@ echo "상태 확인:"
 echo "  cd $BASE && ./pal.sh check"
 echo
 echo "PalDefender admin whitelist 설정 예:"
-echo "  cd $BASE && ./pal.sh adminip 네_PC_공인IP"
+echo "  cd $BASE && ./pal.sh adminip IP"
 INSTALLER
 
 chmod +x install-palworld-wine-docker.sh
