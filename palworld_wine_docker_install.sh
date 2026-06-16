@@ -164,21 +164,35 @@ EOF
 
 cat > entrypoint.sh <<'EOF'
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
 
-if ! getent group steam >/dev/null; then
-  groupadd -g "$PGID" steam
-else
-  groupmod -o -g "$PGID" steam 2>/dev/null || true
+# Ensure group exists for PGID.
+GROUP_NAME="$(getent group "$PGID" | cut -d: -f1 || true)"
+
+if [[ -z "$GROUP_NAME" ]]; then
+  if getent group steam >/dev/null 2>&1; then
+    groupmod -o -g "$PGID" steam 2>/dev/null || true
+    GROUP_NAME="steam"
+  else
+    groupadd -g "$PGID" steam
+    GROUP_NAME="steam"
+  fi
 fi
 
+# Ensure steam user exists.
 if ! id steam >/dev/null 2>&1; then
   useradd -m -u "$PUID" -g "$PGID" -s /bin/bash steam
 else
   usermod -o -u "$PUID" -g "$PGID" steam 2>/dev/null || true
+fi
+
+# Resolve group name again after possible groupmod.
+GROUP_NAME="$(getent group "$PGID" | cut -d: -f1 || true)"
+if [[ -z "$GROUP_NAME" ]]; then
+  GROUP_NAME="steam"
 fi
 
 mkdir -p /data
