@@ -50,6 +50,12 @@ $DOCKER rm -f palworld-wine 2>/dev/null || true
 
 echo "===== 폴더 생성 ====="
 mkdir -p "$BASE"/{data,mods,backups}
+mkdir -p "$BASE/data/server/Pal/Content/Paks/~mods"
+mkdir -p "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods"
+
+ln -sfn "$BASE/data/server/Pal/Content/Paks/~mods" "$HOME/palworld-pak-mods"
+ln -sfn "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods" "$HOME/palworld-ue4ss-mods"
+
 cd "$BASE"
 
 cat > default.env <<EOF
@@ -548,10 +554,10 @@ log "WorkingDirectory=$(pwd)"
 log "WineVersion=$(wine --version || true)"
 log "PalServer=$(ls -al PalServer.exe || true)"
 
-exec wine PalServer.exe
--port="${PUBLIC_PORT:-8211}"
--useperfthreads
--NoAsyncLoadingThread
+exec wine PalServer.exe \
+-port="${PUBLIC_PORT:-8211}" \
+-useperfthreads \
+-NoAsyncLoadingThread \
 -UseMultithreadForDS
 }
 
@@ -674,6 +680,22 @@ PY
 
     $DOCKER compose up -d
     ;;
+    
+  modlinks)
+    mkdir -p "$BASE/data/server/Pal/Content/Paks/~mods"
+    mkdir -p "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods"
+    ```
+    ln -sfn "$BASE/data/server/Pal/Content/Paks/~mods" "$HOME/palworld-pak-mods"
+    ln -sfn "$BASE/data/server/Pal/Binaries/Win64/ue4ss/Mods" "$HOME/palworld-ue4ss-mods"
+
+    echo "PAK mods:"
+    echo "  $HOME/palworld-pak-mods"
+    echo
+    echo "UE4SS mods:"
+    echo "  $HOME/palworld-ue4ss-mods"
+    ;;
+    ```
+    
   check)
     echo "===== docker ====="
     $DOCKER ps --filter name=palworld-wine
