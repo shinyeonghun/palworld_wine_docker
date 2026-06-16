@@ -680,3 +680,4 @@ echo "  cd $BASE && ./pal.sh adminip IP"
 INSTALLER
 
 chmod +x install-palworld-wine-docker.sh
+./install-palworld-wine-docker.sh
